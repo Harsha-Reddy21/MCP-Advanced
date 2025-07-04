@@ -45,9 +45,7 @@ This tool allows users to:
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/doc-chunk-navigator.git
-cd doc-chunk-navigator
+
 
 # Install dependencies
 npm install
