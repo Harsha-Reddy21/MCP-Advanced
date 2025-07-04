@@ -1,112 +1,110 @@
-# Embedding Model Comparison for Plagiarism Detection
+# Embedding Model Comparison
 
-This document compares the different embedding models available in our Plagiarism Detector application.
+This document provides a comparison of different embedding models used in the Plagiarism Detector application.
 
 ## Models Overview
 
-| Model | Dimensions | Size | Languages | Speed | Accuracy |
-|-------|-----------|------|-----------|-------|----------|
-| sentence-transformers/all-MiniLM-L6-v2 | 384 | ~80MB | English | Fast | Good |
-| sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 | 384 | ~420MB | 50+ languages | Medium | Good |
-| OpenAI text-embedding-ada-002 | 1536 | Cloud API | 100+ languages | Fast (API dependent) | Excellent |
+| Model | Type | Size | Languages | Speed | Accuracy |
+|-------|------|------|-----------|-------|----------|
+| all-MiniLM-L6-v2 | Sentence Transformers | 80MB | English | Fast | Good |
+| paraphrase-multilingual-MiniLM-L12-v2 | Sentence Transformers | 420MB | 50+ languages | Medium | Good |
+| text-embedding-ada-002 | OpenAI API | Cloud-based | Multilingual | Fast (API dependent) | Excellent |
 
 ## Detailed Comparison
 
-### 1. sentence-transformers/all-MiniLM-L6-v2
+### 1. all-MiniLM-L6-v2 (Sentence Transformers)
 
-**Strengths:**
-- Excellent performance-to-size ratio
-- Fast inference time
-- Good at capturing semantic similarity in English text
+**Description**: A lightweight model that creates sentence embeddings optimized for semantic similarity tasks.
+
+**Strengths**:
+- Very fast inference time
+- Small model size (80MB)
+- Good performance for English text
 - Runs locally without API dependencies
-- Open source and free to use
 
-**Weaknesses:**
+**Weaknesses**:
+- Less accurate than larger models
 - Limited to English language
-- Less effective for specialized domains
-- Lower dimensionality may miss subtle differences
+- May miss nuanced semantic relationships
 
-**Best for:**
-- General English text comparison
-- Resource-constrained environments
-- Scenarios where speed is critical
-- Privacy-sensitive applications that need local processing
+**Best for**:
+- Quick analysis of English text
+- Environments with limited computational resources
+- Applications requiring low latency
 
-### 2. sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+### 2. paraphrase-multilingual-MiniLM-L12-v2 (Sentence Transformers)
 
-**Strengths:**
-- Supports 50+ languages
-- Good at cross-lingual similarity detection
-- Can detect plagiarism across different languages
+**Description**: A medium-sized multilingual model that supports 50+ languages.
+
+**Strengths**:
+- Good balance of speed and accuracy
+- Supports multiple languages
 - Runs locally without API dependencies
-- Open source and free to use
+- Better at capturing semantic nuances than smaller models
 
-**Weaknesses:**
-- Larger model size
-- Slower than the English-only model
-- May have inconsistent performance across languages
+**Weaknesses**:
+- Slower than the smaller L6 model
+- Larger model size (420MB)
+- Not as accurate as the largest models or OpenAI's models
 
-**Best for:**
-- Multilingual environments
-- Cross-language plagiarism detection
-- International academic settings
-- Content moderation across multiple languages
+**Best for**:
+- Multilingual plagiarism detection
+- Applications requiring good accuracy across languages
+- Production environments with moderate computational resources
 
-### 3. OpenAI text-embedding-ada-002
+### 3. text-embedding-ada-002 (OpenAI)
 
-**Strengths:**
-- State-of-the-art semantic understanding
-- Highest dimensionality (1536) captures more nuance
-- Excellent performance across languages
-- Handles specialized terminology better
-- Regularly updated by OpenAI
+**Description**: OpenAI's embedding model, accessible through their API.
 
-**Weaknesses:**
+**Strengths**:
+- State-of-the-art accuracy
+- Excellent at capturing semantic relationships
+- Handles various text formats well
+- No local computational requirements
+
+**Weaknesses**:
 - Requires API key and internet connection
-- Usage costs based on API calls
-- Potential privacy concerns with sending data to external API
-- Dependency on third-party service availability
+- Usage costs (pay per token)
+- API rate limits
+- Dependency on third-party service
 
-**Best for:**
+**Best for**:
 - High-stakes plagiarism detection
-- Professional or enterprise applications
-- Cases requiring the highest accuracy
-- Complex text with specialized terminology
+- Applications where accuracy is critical
+- Scenarios where computational resources are limited but budget is available
 
 ## Performance Metrics
 
-The following metrics are based on internal testing with a corpus of academic papers, articles, and deliberately paraphrased content:
+### Semantic Similarity Task Performance
 
-| Model | Precision | Recall | F1 Score | False Positive Rate |
-|-------|-----------|--------|----------|---------------------|
-| all-MiniLM-L6-v2 | 0.82 | 0.79 | 0.80 | 0.08 |
-| multilingual-MiniLM-L12-v2 | 0.80 | 0.81 | 0.80 | 0.10 |
-| text-embedding-ada-002 | 0.91 | 0.88 | 0.89 | 0.04 |
+| Model | Spearman Correlation (STS Benchmark) | Accuracy on Paraphrase Detection |
+|-------|--------------------------------------|----------------------------------|
+| all-MiniLM-L6-v2 | 0.77 | 83% |
+| paraphrase-multilingual-MiniLM-L12-v2 | 0.80 | 86% |
+| text-embedding-ada-002 | 0.86 | 92% |
 
-## Use Case Recommendations
+### Resource Usage
 
-1. **Academic Plagiarism Detection**
-   - Primary: OpenAI text-embedding-ada-002
-   - Alternative: all-MiniLM-L6-v2 (for English-only)
+| Model | Inference Time (1000 sentences) | Memory Usage | Disk Space |
+|-------|--------------------------------|--------------|-----------|
+| all-MiniLM-L6-v2 | 2 seconds | ~200MB | 80MB |
+| paraphrase-multilingual-MiniLM-L12-v2 | 5 seconds | ~500MB | 420MB |
+| text-embedding-ada-002 | API dependent | Minimal (client only) | N/A (cloud) |
 
-2. **International Content Comparison**
-   - Primary: paraphrase-multilingual-MiniLM-L12-v2
-   - Alternative: OpenAI text-embedding-ada-002 (if budget allows)
+## Recommended Use Cases
 
-3. **High-Volume Content Moderation**
-   - Primary: all-MiniLM-L6-v2
-   - Alternative: multilingual-MiniLM-L12-v2 (if multilingual support needed)
-
-4. **Offline/Privacy-Sensitive Applications**
-   - Primary: all-MiniLM-L6-v2 (English)
-   - Alternative: multilingual-MiniLM-L12-v2 (multilingual)
+- **Quick Analysis**: all-MiniLM-L6-v2
+- **Multilingual Documents**: paraphrase-multilingual-MiniLM-L12-v2
+- **High-Stakes Plagiarism Detection**: text-embedding-ada-002
+- **Offline Usage**: Sentence Transformers models
+- **Best Accuracy**: text-embedding-ada-002
 
 ## Conclusion
 
 The choice of embedding model depends on your specific requirements:
 
-- For **general use**, the all-MiniLM-L6-v2 model offers the best balance of performance and efficiency.
-- For **multilingual support**, the paraphrase-multilingual-MiniLM-L12-v2 model is recommended.
-- For **highest accuracy**, especially in professional settings, the OpenAI text-embedding-ada-002 model is superior but comes with API costs and dependencies.
+- If you need fast, local processing for English text, use all-MiniLM-L6-v2
+- If you need multilingual support with good performance, use paraphrase-multilingual-MiniLM-L12-v2
+- If you need the highest accuracy and don't mind using an API, use text-embedding-ada-002
 
-Our application allows you to switch between these models to compare results and choose the best approach for your specific plagiarism detection needs. 
+Our application allows you to switch between these models to compare their performance on your specific texts. 

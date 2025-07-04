@@ -1,89 +1,81 @@
 # How Embeddings Detect Plagiarism
 
-This document explains the technical approach behind using embeddings for plagiarism detection in our application.
+## Introduction to Semantic Similarity
 
-## Understanding Text Embeddings
+Traditional plagiarism detection often relies on exact string matching or simple lexical features, which can be easily circumvented by paraphrasing, word substitution, or sentence restructuring. Modern approaches use semantic embeddings to capture the meaning of text, not just its surface form.
 
-Text embeddings are vector representations of text that capture semantic meaning. Unlike traditional string-matching approaches that look for exact matches, embeddings represent the meaning and context of text in a high-dimensional vector space.
+## What are Text Embeddings?
 
-### Key Properties of Embeddings
+Text embeddings are dense vector representations of text that capture semantic meaning. Unlike simple bag-of-words approaches, embeddings place semantically similar words or phrases closer together in a high-dimensional vector space. This means:
 
-1. **Semantic Understanding**: Embeddings capture the meaning of words and phrases, not just their literal form.
-2. **Contextual Awareness**: Modern embedding models understand words in context.
-3. **Language Agnostic**: Many embedding models work across multiple languages.
-4. **Dimensionality Reduction**: Complex language is reduced to fixed-length vectors (typically 384-1536 dimensions).
+- Similar concepts are represented by vectors that are close to each other
+- Different concepts are represented by vectors that are far apart
+- The relationships between concepts are preserved in the vector space
 
-## How Our Plagiarism Detection Works
+## How Embeddings Work for Plagiarism Detection
 
-### 1. Text Preprocessing
+1. **Text Preprocessing**: Each text is cleaned and normalized
+2. **Embedding Generation**: Each text is converted into a vector representation using a pre-trained model
+3. **Similarity Calculation**: Cosine similarity is calculated between vectors
+4. **Threshold Application**: Pairs with similarity above a certain threshold are flagged as potential plagiarism
 
-Before generating embeddings, we perform basic preprocessing:
-- Converting text to lowercase
-- Removing excessive whitespace
-- (Optional) Removing punctuation and special characters
+## Advantages of Embedding-Based Detection
 
-### 2. Embedding Generation
+- **Paraphrase Detection**: Can detect plagiarism even when words are changed but meaning remains similar
+- **Language Agnostic**: Some models work across multiple languages
+- **Robust to Minor Edits**: Small changes to text won't significantly alter the embedding
+- **Context Awareness**: Considers the context in which words appear, not just the words themselves
 
-We support multiple embedding models:
+## Embedding Models Used in This Application
 
-- **Sentence Transformers**: Open-source models like `all-MiniLM-L6-v2` that generate fixed-size embeddings (384 dimensions)
-- **Multilingual Models**: Models like `paraphrase-multilingual-MiniLM-L12-v2` that work across languages
-- **OpenAI Embeddings**: Commercial embeddings like `text-embedding-ada-002` (1536 dimensions)
+### Sentence Transformers
 
-Each model has different strengths:
-- Some are better at capturing subtle paraphrasing
-- Others excel at cross-lingual plagiarism detection
-- Some balance performance and computational efficiency
+Sentence Transformers are neural network models specifically designed to generate embeddings for sentences or paragraphs. They're fine-tuned on tasks like natural language inference and semantic similarity.
 
-### 3. Similarity Calculation
+Benefits:
+- Open-source and locally deployable
+- Multiple model sizes available (speed vs. accuracy tradeoff)
+- Support for 50+ languages in multilingual models
 
-Once we have embeddings for each text, we calculate similarity using **cosine similarity**:
+### OpenAI Embeddings
+
+OpenAI's embedding models (like text-embedding-ada-002) are trained on vast amounts of text data and provide high-quality semantic representations.
+
+Benefits:
+- State-of-the-art performance
+- Regularly updated with new knowledge
+- Robust to various text formats and domains
+
+## Cosine Similarity
+
+Cosine similarity measures the cosine of the angle between two vectors, producing a value between -1 and 1 (though with text embeddings, values are typically between 0 and 1):
+
+- 1 means identical semantic meaning
+- 0 means completely unrelated
+- Values close to 1 indicate potential plagiarism
+
+The formula for cosine similarity is:
 
 ```
-similarity = (A · B) / (||A|| * ||B||)
+cosine_similarity(A, B) = (A · B) / (||A|| * ||B||)
 ```
 
 Where:
-- A and B are embedding vectors
-- A · B is the dot product
-- ||A|| and ||B|| are the magnitudes of the vectors
-
-Cosine similarity measures the cosine of the angle between vectors, resulting in values between -1 and 1:
-- 1 means identical semantic meaning
-- 0 means unrelated content
-- -1 means opposite meaning (rare in practice)
-
-### 4. Plagiarism Detection
-
-We use a configurable threshold (default: 0.8 or 80%) to identify potential plagiarism:
-
-- **High Similarity (>80%)**: Likely plagiarism or very similar content
-- **Medium Similarity (50-80%)**: Possible paraphrasing or shared concepts
-- **Low Similarity (<50%)**: Likely different content
-
-## Advantages Over Traditional Methods
-
-1. **Paraphrase Detection**: Catches rewording that would evade exact-match detection
-2. **Cross-language Detection**: Can identify translated plagiarism
-3. **Concept Matching**: Identifies when the same ideas are presented differently
-4. **Robustness**: Less affected by minor edits, word reordering, or synonym substitution
+- A · B is the dot product of vectors A and B
+- ||A|| and ||B|| are the magnitudes (Euclidean norms) of vectors A and B
 
 ## Limitations
 
-1. **Short Text**: Less reliable with very short texts (few sentences)
-2. **Highly Technical Content**: May struggle with specialized terminology
-3. **False Positives**: Common phrases or standard definitions may trigger high similarity
-4. **Model Biases**: Embedding models inherit biases from their training data
+- **Conceptual Similarity vs. Plagiarism**: High similarity might indicate similar topics, not necessarily plagiarism
+- **Short Text Challenges**: Very short texts may not provide enough context for reliable embeddings
+- **Domain Specificity**: General-purpose embeddings may miss nuances in specialized domains
+- **Threshold Selection**: Choosing the right similarity threshold requires balancing precision and recall
 
-## Practical Example
+## Practical Considerations
 
-Consider these two texts:
+When using this plagiarism detector:
 
-**Text 1**: "The quick brown fox jumps over the lazy dog."
-**Text 2**: "A fast auburn fox leaps above the inactive canine."
-
-Traditional string matching would find little similarity, but embedding-based detection would identify these as highly similar because they express the same concept with different words.
-
-## Conclusion
-
-Embedding-based plagiarism detection represents a significant advancement over traditional methods by focusing on meaning rather than exact matches. By using multiple models and configurable thresholds, our application provides a powerful and flexible tool for identifying potential plagiarism across various contexts and languages. 
+1. **Threshold Tuning**: Adjust the similarity threshold based on your specific needs
+2. **Model Selection**: Different embedding models have different strengths
+3. **Text Length**: Provide sufficient text for reliable analysis
+4. **Human Verification**: Always have a human expert verify potential plagiarism cases 

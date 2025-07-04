@@ -1,103 +1,104 @@
 # Plagiarism Detector - Semantic Similarity Analyzer
 
-A web application that detects plagiarism and analyzes semantic similarity between multiple text inputs using various embedding models.
-
-## Project Overview
-
-This application uses natural language processing techniques to detect potential plagiarism between text samples. It compares texts using semantic embeddings, which capture the meaning of the text rather than just exact matches, making it effective at identifying paraphrased content.
+A web application that detects potential plagiarism between multiple text samples using semantic similarity analysis with various embedding models.
 
 ## Features
 
-- Web interface with multiple text input boxes
-- Semantic similarity comparison using various embedding models
-- Visualization of similarity percentages between all text pairs
-- Identification of potential plagiarism based on configurable thresholds
-- Comparison of different embedding models (sentence-transformers, OpenAI embeddings)
+- Web interface with dynamic input text boxes for multiple text samples
+- Semantic similarity comparison using advanced embedding models
+- Similarity matrix visualization showing percentages between all text pairs
+- Identification of potential plagiarism (configurable similarity threshold)
+- Support for multiple embedding models:
+  - Sentence Transformers (local processing)
+  - OpenAI Embeddings (API-based)
+- Detailed documentation on embedding models and plagiarism detection
 
-## Technical Implementation
+## Architecture
 
-- **Frontend**: React with Material-UI
-- **Backend**: FastAPI
-- **Core Components**:
-  - Text preprocessing
-  - Embedding generation using multiple models
-  - Pairwise cosine similarity calculation
-  - Results visualization showing similarity matrix
-  - Clone detection based on similarity thresholds
+- **Frontend**: React.js
+- **Backend**: FastAPI (Python)
+- **Embedding Models**: Sentence Transformers, OpenAI API
 
-## Project Structure
+## Getting Started
 
-```
-Plagiarism_Detector/
-├── frontend/           # React frontend
-│   ├── src/            # Source code
-│   │   ├── components/ # React components
-│   │   └── ...
-│   └── ...
-├── backend/            # FastAPI backend
-│   ├── main.py         # Main API implementation
-│   ├── requirements.txt # Python dependencies
-│   └── ...
-└── README.md           # This file
-```
+### Prerequisites
 
-## Setup and Installation
+- Python 3.8+
+- Node.js 14+
+- npm or yarn
 
-### Backend
+### Backend Setup
 
 1. Navigate to the backend directory:
-```bash
-cd backend
-```
+   ```
+   cd backend
+   ```
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+2. Create a virtual environment:
+   ```
+   python -m venv venv
+   ```
 
-3. Create a `.env` file based on `.env.example` and add your OpenAI API key if you want to use OpenAI embeddings.
+3. Activate the virtual environment:
+   - Windows: `venv\Scripts\activate`
+   - macOS/Linux: `source venv/bin/activate`
 
-4. Run the server:
-```bash
-uvicorn main:app --reload
-```
+4. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
 
-The API will be available at http://localhost:8000
+5. Create a `.env` file based on `.env.example`:
+   ```
+   cp .env.example .env
+   ```
+   
+6. Edit the `.env` file and add your OpenAI API key if you want to use OpenAI embeddings.
 
-### Frontend
+7. Start the backend server:
+   ```
+   uvicorn main:app --reload
+   ```
+
+### Frontend Setup
 
 1. Navigate to the frontend directory:
-```bash
-cd frontend
-```
+   ```
+   cd frontend
+   ```
 
 2. Install dependencies:
-```bash
-npm install
-```
+   ```
+   npm install
+   ```
 
 3. Start the development server:
-```bash
-npm start
-```
+   ```
+   npm start
+   ```
 
-The application will be available at http://localhost:3000
+4. Open your browser and navigate to `http://localhost:3000`
 
-## How It Works
+## Usage
 
-1. **Text Input**: Users enter multiple text samples for comparison
-2. **Embedding Generation**: The backend converts texts into embeddings using selected models
-3. **Similarity Calculation**: The system calculates cosine similarity between all text pairs
-4. **Visualization**: Results are displayed as a similarity matrix and chart
-5. **Plagiarism Detection**: Texts with similarity above the threshold are flagged as potential plagiarism
+1. Enter text samples in the input boxes (minimum 2 texts required)
+2. Select the embedding model you want to use
+3. Click "Analyze" to process the texts
+4. View the similarity matrix and potential plagiarism results
+5. Try different models to compare their performance
 
-## Embedding Models
+## Documentation
 
-The application supports multiple embedding models:
-- sentence-transformers/all-MiniLM-L6-v2
-- sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-- OpenAI's text-embedding-ada-002 (requires API key)
+- [How Embeddings Detect Plagiarism](docs/how_embeddings_detect_plagiarism.md)
+- [Embedding Model Comparison](docs/embedding_model_comparison.md)
 
 ## License
 
-MIT 
+MIT
+
+## Acknowledgments
+
+- [Sentence Transformers](https://www.sbert.net/)
+- [OpenAI](https://openai.com/)
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [React](https://reactjs.org/) 

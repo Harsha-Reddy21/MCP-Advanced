@@ -1,203 +1,158 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  FormControl,
-  Grid,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  SelectChangeEvent,
-  Slider,
-  Typography,
-  Alert,
-} from '@mui/material';
+import { Container, Typography, Box, FormControl, InputLabel, Select, MenuItem, Paper, CircularProgress, SelectChangeEvent } from '@mui/material';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import TextInputSection from './TextInputSection';
 import ResultsSection from './ResultsSection';
 
-// Define interfaces for our data structures
-interface TextItem {
-  id: string;
-  content: string;
+interface Model {
+  name: string;
+  display_name: string;
+  type: 'sentence_transformers' | 'openai';
 }
 
-interface SimilarityPair {
-  id1: string;
-  id2: string;
-  similarity: number;
-  is_potential_clone: boolean;
-}
-
-interface PlagiarismResponse {
+interface AnalysisResult {
   similarity_matrix: number[][];
-  text_ids: string[];
-  pairs: SimilarityPair[];
+  potential_plagiarism: {
+    text1_index: number;
+    text2_index: number;
+    similarity: number;
+  }[];
   model_used: string;
 }
 
 const PlagiarismDetector: React.FC = () => {
-  // State for text inputs
-  const [texts, setTexts] = useState<TextItem[]>([
-    { id: 'text1', content: '' },
-    { id: 'text2', content: '' },
-  ]);
-
-  // State for selected model and threshold
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('sentence-transformers/all-MiniLM-L6-v2');
-  const [threshold, setThreshold] = useState<number>(0.8);
+  const [useOpenAI, setUseOpenAI] = useState<boolean>(false);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [texts, setTexts] = useState<string[]>([]);
   
-  // State for available models
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
-  
-  // State for API interaction
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<PlagiarismResponse | null>(null);
+  // API URL
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
   // Fetch available models on component mount
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/models');
-        setAvailableModels(response.data.models);
-      } catch (err) {
-        console.error('Failed to fetch models:', err);
-        setError('Failed to fetch available models. Please make sure the backend server is running.');
+        const response = await axios.get(`${API_URL}/models`);
+        const modelsList: Model[] = [];
+        
+        // Process sentence transformers models
+        response.data.sentence_transformers.forEach((model: string) => {
+          modelsList.push({
+            name: model,
+            display_name: model.split('/').pop() || model,
+            type: 'sentence_transformers'
+          });
+        });
+        
+        // Process OpenAI models
+        response.data.openai.forEach((model: string) => {
+          modelsList.push({
+            name: model,
+            display_name: `OpenAI: ${model}`,
+            type: 'openai'
+          });
+        });
+        
+        setModels(modelsList);
+      } catch (error) {
+        console.error('Error fetching models:', error);
+        toast.error('Failed to fetch available models. Using default models.');
       }
     };
 
     fetchModels();
-  }, []);
+  }, [API_URL]);
 
-  // Handle adding a new text input
-  const handleAddText = () => {
-    setTexts([...texts, { id: `text${texts.length + 1}`, content: '' }]);
-  };
-
-  // Handle removing a text input
-  const handleRemoveText = (id: string) => {
-    if (texts.length <= 2) {
-      setError('At least 2 texts are required for comparison.');
-      return;
-    }
-    setTexts(texts.filter(text => text.id !== id));
-  };
-
-  // Handle text content change
-  const handleTextChange = (id: string, content: string) => {
-    setTexts(texts.map(text => (text.id === id ? { ...text, content } : text)));
-  };
-
-  // Handle model selection change
   const handleModelChange = (event: SelectChangeEvent) => {
-    setSelectedModel(event.target.value);
+    const modelName = event.target.value;
+    setSelectedModel(modelName);
+    
+    // Check if it's an OpenAI model
+    const model = models.find(m => m.name === modelName);
+    setUseOpenAI(model?.type === 'openai');
   };
 
-  // Handle threshold change
-  const handleThresholdChange = (_event: Event, newValue: number | number[]) => {
-    setThreshold(newValue as number);
-  };
-
-  // Handle form submission
-  const handleSubmit = async () => {
-    // Validate inputs
-    const emptyTexts = texts.filter(text => !text.content.trim());
-    if (emptyTexts.length > 0) {
-      setError('All text fields must be filled.');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
+  const handleAnalyze = async (textInputs: string[]) => {
+    setIsLoading(true);
+    setTexts(textInputs);
+    
     try {
-      const response = await axios.post<PlagiarismResponse>('http://localhost:8000/detect-plagiarism', {
-        texts,
-        model: selectedModel,
-        threshold,
+      const response = await axios.post(`${API_URL}/analyze`, {
+        texts: textInputs,
+        model_name: selectedModel,
+        use_openai: useOpenAI
       });
-
-      setResults(response.data);
-    } catch (err) {
-      console.error('Error detecting plagiarism:', err);
-      setError('Failed to detect plagiarism. Please try again.');
+      
+      setAnalysisResult(response.data);
+      toast.success('Analysis completed successfully!');
+    } catch (error) {
+      console.error('Error during analysis:', error);
+      toast.error('Failed to analyze texts. Please try again.');
+      setAnalysisResult(null);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <Box sx={{ mt: 4 }}>
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          Settings
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <ToastContainer position="top-right" autoClose={5000} />
+      
+      <Box className="header" sx={{ mb: 4, textAlign: 'center' }}>
+        <Typography variant="h3" component="h1" gutterBottom>
+          Plagiarism Detector
         </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel id="model-select-label">Embedding Model</InputLabel>
-              <Select
-                labelId="model-select-label"
-                id="model-select"
-                value={selectedModel}
-                label="Embedding Model"
-                onChange={handleModelChange}
-              >
-                {availableModels.map((model) => (
-                  <MenuItem key={model} value={model}>
-                    {model}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography gutterBottom>Plagiarism Threshold: {threshold}</Typography>
-            <Slider
-              value={threshold}
-              onChange={handleThresholdChange}
-              aria-labelledby="threshold-slider"
-              step={0.05}
-              marks
-              min={0.5}
-              max={1}
-              valueLabelDisplay="auto"
-            />
-          </Grid>
-        </Grid>
-      </Paper>
-
-      <TextInputSection
-        texts={texts}
-        onTextChange={handleTextChange}
-        onAddText={handleAddText}
-        onRemoveText={handleRemoveText}
-      />
-
-      <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-        <Button
-          variant="contained"
-          color="primary"
-          size="large"
-          onClick={handleSubmit}
-          disabled={loading}
-          sx={{ px: 4, py: 1 }}
-        >
-          {loading ? <CircularProgress size={24} /> : 'Analyze for Plagiarism'}
-        </Button>
+        <Typography variant="h6" color="textSecondary">
+          Semantic Similarity Analyzer
+        </Typography>
       </Box>
-
-      {results && <ResultsSection results={results} texts={texts} />}
-    </Box>
+      
+      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h5" component="h2" gutterBottom>
+          Model Selection
+        </Typography>
+        <FormControl fullWidth>
+          <InputLabel id="model-select-label">Embedding Model</InputLabel>
+          <Select
+            labelId="model-select-label"
+            id="model-select"
+            value={selectedModel}
+            label="Embedding Model"
+            onChange={handleModelChange}
+            disabled={isLoading}
+          >
+            {models.map((model) => (
+              <MenuItem key={model.name} value={model.name}>
+                {model.display_name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Paper>
+      
+      <TextInputSection onAnalyze={handleAnalyze} isLoading={isLoading} />
+      
+      {isLoading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+      
+      {analysisResult && (
+        <ResultsSection 
+          similarityMatrix={analysisResult.similarity_matrix}
+          potentialPlagiarism={analysisResult.potential_plagiarism}
+          modelUsed={analysisResult.model_used}
+          texts={texts}
+        />
+      )}
+    </Container>
   );
 };
 
